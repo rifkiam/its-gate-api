@@ -50,6 +50,7 @@ app.get('/', (req, res) => {
 app.post('/masuk', (req, res) => {
 
   let id_kartu = req.body.id_kartu
+  let kartu_data = null
   let id_gate = null
   let id_scanned_gate = req.body.id_gate
   let card_status = 0
@@ -60,8 +61,11 @@ app.post('/masuk', (req, res) => {
     }
     else
     {
-      card_status = result.recordset[0].is_aktif
-
+      console.log(result.recordset[0])
+      if(result)
+      {
+        kartu_data = result.recordset[0]
+      }
       sql.query(`SELECT * FROM register_gate WHERE id_register_gate = '${id_scanned_gate}';`, (err, result) => {
         if (err) {
           res.send({ error: err })
@@ -74,13 +78,13 @@ app.post('/masuk', (req, res) => {
               res.status(404).json({ error: err })
               // res.send(err)
             }
-            else if (card_status === 0 || !id_gate)
+            else if (kartu_data.is_aktif == null || kartu_data.is_aktif === 0 || !id_gate)
             {
               res.send("0")
             }
-            else if (card_status === 1 && id_gate)
+            else if (kartu_data.is_aktif === 1 && id_gate)
             {
-              // sql.query(`UPDATE kartu_akses SET is_aktif = 1 WHERE id_kartu_akses = '${id}'`)
+              sql.query(`INSERT INTO log_masuk VALUES(NULL, ${id_kartu}, ${id_scanned_gate}, now(), 1)`);
               res.send("1")
             }
           })
@@ -96,34 +100,50 @@ app.post('/masuk', (req, res) => {
 
 app.post('/keluar', (req, res) => {
 
-  let id = req.body.id
-  let card_status = null
+  let id_kartu = req.body.id_kartu
+  let kartu_data = null
+  let id_gate = null
+  let id_scanned_gate = req.body.id_gate
+  let card_status = 0
 
-  sql.query(`SELECT is_aktif FROM kartu_akses WHERE id_kartu_akses = '${id}';`, (err, result) => {
+  sql.query(`SELECT is_aktif FROM kartu_akses WHERE id_kartu_akses = '${id_kartu}';`, (err, result) => {
     if (err) {
       res.send({ error: err })
     }
     else
     {
-      card_status = result.recordset[0].is_aktif
-      console.log(card_status)
-      return;
-    }
-  })
-
-  sql.query(`SELECT * FROM kartu_akses WHERE id_kartu_akses = '${id}';`, (err, result) => {
-    if (err) {
-      res.status(404).json({ error: err })
-    }
-    else if (card_status === 0)
-    {
-      res.status(404).json({ error: "Kartu tidak aktif" })
-    }
-    else
-    {
-      // sql.query(`UPDATE kartu_akses SET is_aktif = 0 WHERE id_kartu_akses = '${id}'`)
-      res.send({
-        message: "Silahkan keluar!"
+      console.log(result.recordset[0])
+      if(result)
+      {
+        kartu_data = result.recordset[0]
+      }
+      sql.query(`SELECT * FROM register_gate WHERE id_register_gate = '${id_scanned_gate}';`, (err, result) => {
+        if (err) {
+          res.send({ error: err })
+        }
+        else if (result)
+        {
+          id_gate = result.recordset[0]
+          sql.query(`SELECT * FROM kartu_akses WHERE id_kartu_akses = '${id_kartu}';`, (err, result) => {
+            if (err) {
+              res.status(404).json({ error: err })
+              // res.send(err)
+            }
+            else if (kartu_data.is_aktif == null || kartu_data.is_aktif === 0 || !id_gate)
+            {
+              res.send("0")
+            }
+            else if (kartu_data.is_aktif === 1 && id_gate)
+            {
+              sql.query(`INSERT INTO log_masuk VALUES(NULL, ${id_kartu}, ${id_scanned_gate}, now(), 1)`);
+              res.send("1")
+            }
+          })
+        }
+        else if (!result)
+        {
+          res.status(404).json({ error: err })
+        }
       })
     }
   })
