@@ -84,7 +84,7 @@ app.post('/masuk', (req, res) => {
             }
             else if (kartu_data.is_aktif === 1 && id_gate)
             {
-              sql.query(`INSERT INTO log_masuk VALUES(NULL, ${id_kartu}, ${id_scanned_gate}, now(), 1)`);
+              sql.query(`INSERT INTO log_masuk (id_kartu_akses, id_register_gate, date_time, is_valid) VALUES(${id_kartu}, ${id_scanned_gate}, GETDATE(), 1)`);
               res.send("1")
             }
           })
@@ -135,7 +135,7 @@ app.post('/keluar', (req, res) => {
             }
             else if (kartu_data.is_aktif === 1 && id_gate)
             {
-              sql.query(`INSERT INTO log_keluar VALUES(NULL, ${id_kartu}, ${id_scanned_gate}, now(), 1)`);
+              sql.query(`INSERT INTO log_keluar (id_kartu_akses, id_register_gate, date_time, is_valid) VALUES(${id_kartu}, ${id_scanned_gate}, GETDATE(), 1)`);
               res.send("1")
             }
           })
